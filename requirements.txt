@@ -1,6 +1,6 @@
 fastapi 
 uvicorn 
 keras 
-tensorflow-cpu==2.15.0 
+tensorflow-cpu
 opencv-python 
 pillow
