@@ -1,0 +1,6 @@
+fastapi 
+uvicorn 
+keras 
+tensorflow 
+opencv-python 
+pillow
