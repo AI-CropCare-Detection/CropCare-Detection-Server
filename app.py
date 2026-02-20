@@ -1,8 +1,11 @@
-from fastapi import FastAPI, status
+from fastapi import FastAPI, status, UploadFile, File
 import keras
 import uvicorn
 import os
 import numpy as np
+import io
+from PIL import Image
+
 from class_list import class_name 
 from  model import PredictRequest
 
@@ -15,7 +18,6 @@ app.CORS = [
         "allow_headers": ["*"],
     }
 ]
-
 model = keras.models.load_model('trained_model.h5')
 
 # check server status
@@ -25,7 +27,6 @@ def check_status():
 
 # train model predictor route
 @app.post("/predict", status_code=status.HTTP_200_OK)
-@app.post("/predict")
 async def predict(file: UploadFile = File(...)):
 
     contents = await file.read()
