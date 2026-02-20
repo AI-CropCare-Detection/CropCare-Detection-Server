@@ -1,4 +1,5 @@
 from fastapi import FastAPI, status, UploadFile, File
+from fastapi.middleware.cors import CORSMiddleware
 import keras
 import uvicorn
 import os
@@ -11,13 +12,14 @@ from  model import PredictRequest
 
 app = FastAPI()
 
-app.CORS = [
-    {
-        "allow_origins": ["*"],
-        "allow_methods": ["*"],
-        "allow_headers": ["*"],
-    }
-]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=True
+)
+
 model = keras.models.load_model('trained_model.h5')
 
 # check server status
