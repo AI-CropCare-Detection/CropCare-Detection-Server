@@ -2,8 +2,9 @@ from fastapi import FastAPI, status
 import keras
 import uvicorn
 import os
+import numpy as np
+from class_list import class_name 
 from  model import PredictRequest
-from  process_new_image import processing_new_image
 
 app = FastAPI()
 model = keras.models.load_model('trained_model.h5')
@@ -15,16 +16,23 @@ def check_status():
 
 # train model predictor route
 @app.post("/predict", status_code=status.HTTP_200_OK)
-def predict(data: PredictRequest):
-    path_to_image = data.path_to_image
+def predict_disease_api(data: PredictRequest):
+    image = keras.preprocessing.image.load_img(
+        data.path_to_image  , target_size=(128, 128)
+    )
+    input_arr = keras.preprocessing.image.img_to_array(image) / 255.0
+    input_arr = np.expand_dims(input_arr, axis=0)
 
-    input_arr = processing_new_image(path_to_image)
-    result = model.predict(input_arr)
+    prediction = model.predict(input_arr)
+    result_index = np.argmax(prediction)
+    confidence = float(np.max(prediction))
 
     return {
-        "result": result.tolist(),  # JSON-safe
-        "status": "success"
+        "predicted_class": class_name[result_index],
+        "confidence": round(confidence, 4)
     }
+    
+
 
 def main():
     host = os.getenv("HOST", "0.0.0.0")
