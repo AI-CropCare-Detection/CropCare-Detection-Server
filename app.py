@@ -10,7 +10,7 @@ app = FastAPI()
 model = keras.models.load_model('trained_model.h5')
 
 # check server status
-@app.get("/status")
+@app.get("/")
 def check_status():
     return {"status": "Server is running"}
 
