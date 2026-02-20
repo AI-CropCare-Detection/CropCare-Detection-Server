@@ -7,6 +7,15 @@ from class_list import class_name
 from  model import PredictRequest
 
 app = FastAPI()
+
+app.CORS = [
+    {
+        "allow_origins": ["*"],
+        "allow_methods": ["*"],
+        "allow_headers": ["*"],
+    }
+]
+
 model = keras.models.load_model('trained_model.h5')
 
 # check server status
