@@ -1,8 +1,11 @@
-fastapi 
-uvicorn 
-keras 
-tensorflow-cpu
-opencv-python 
+fastapi
+uvicorn
+opencv-python
 pillow
 numpy
 python-multipart
+torch
+matplotlib
+tqdm
+albumentations
+pydantic

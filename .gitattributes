@@ -1,0 +1,2 @@
+**/*.pt filter=lfs diff=lfs merge=lfs -text
+CHECKPOINT_DIR/best_model.pt filter=lfs diff=lfs merge=lfs -text

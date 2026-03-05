@@ -1,74 +1,47 @@
-from fastapi import FastAPI, status, UploadFile, File
-from fastapi.middleware.cors import CORSMiddleware
-import keras
-import uvicorn
+from __future__ import annotations
+
 import os
-import numpy as np
-import io
-from PIL import Image
 
-from class_list import class_name 
-from  model import PredictRequest
+import uvicorn
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+from routes import router
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-    allow_credentials=True
-)
+# ── App factory ───────────────────────────────────────────────────────────────
 
-model = keras.models.load_model('trained_model.h5')
+def create_app() -> FastAPI:
+    app = FastAPI(
+        title="Plant Disease Classifier API",
+        description=(
+            "YOLOv7-based plant-disease classifier with optional "
+            "test-time augmentation (TTA). Upload a leaf image to get "
+            "a disease prediction with confidence scores."
+        ),
+        version="2.0.0",
+        docs_url="/docs",
+    )
 
-# check server status
-@app.get("/")
-def check_status():
-    return {"status": "Server is running"}
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
+        allow_credentials=True,
+    )
 
-# train model predictor route
-@app.post("/predict", status_code=status.HTTP_200_OK)
-async def predict(file: UploadFile = File(...)):
-
-    contents = await file.read()
-
-    image = Image.open(io.BytesIO(contents)).resize((128,128))
-    image = np.array(image) / 255.0
-    image = np.expand_dims(image, axis=0)
-
-    prediction = model.predict(image)
-    result_index = np.argmax(prediction)
-    confidence = float(np.max(prediction))
-
-    return {
-        "predicted_class": class_name[result_index],
-        "confidence": round(confidence, 4)
-    }
-    
-# def predict_disease_api(data: PredictRequest):
-#     image = keras.preprocessing.image.load_img(
-#         data.path_to_image  , target_size=(128, 128)
-#     )
-#     input_arr = keras.preprocessing.image.img_to_array(image) / 255.0
-#     input_arr = np.expand_dims(input_arr, axis=0)
-
-#     prediction = model.predict(input_arr)
-#     result_index = np.argmax(prediction)
-#     confidence = float(np.max(prediction))
-
-#     return {
-#         "predicted_class": class_name[result_index],
-#         "confidence": round(confidence, 4)
-#     }
-    
+    app.include_router(router)
+    return app
 
 
-def main():
+app = create_app()
+
+
+def main() -> None:
     host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", 8000))
     uvicorn.run(app, host=host, port=port)
-    
+
 
 if __name__ == "__main__":
     main()

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Crop Disease Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            text-align: center;
+        }
+        .result-box {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            display: none;
+        }
+        img {
+            margin-top: 15px;
+            max-width: 100%;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Crop Disease Prediction</h2>
+
+    <input type="file" id="imageInput" accept="image/*">
+    <br><br>
+    <button onclick="uploadImage()">Predict</button>
+
+    <div class="result-box" id="resultBox">
+        <h3>Prediction Result</h3>
+        <p><strong>Class:</strong> <span id="predictedClass"></span></p>
+        <p><strong>Confidence:</strong> <span id="confidence"></span></p>
+        <img id="previewImage" />
+    </div>
+
+<script>
+async function uploadImage() {
+    const input = document.getElementById("imageInput");
+    const file = input.files[0];
+
+    if (!file) {
+        alert("Please select an image.");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const response = await fetch("https://cropcare-detection-server.onrender.com/predict", {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+
+        document.getElementById("resultBox").style.display = "block";
+        document.getElementById("predictedClass").innerText = result.predicted_class;
+        document.getElementById("confidence").innerText = result.confidence;
+        document.getElementById("previewImage").src = URL.createObjectURL(file);
+
+    } catch (error) {
+        alert("Error connecting to backend.");
+        console.error(error);
+    }
+}
+</script>
+
+</body>
+</html>
