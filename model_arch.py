@@ -1,8 +1,13 @@
+"""
+model_arch.py  –  YOLOv7 classification architecture.
+Extracted exactly from the training notebook — do NOT modify unless
+you retrain the model, as weight shapes must match the checkpoint.
+"""
+
 from __future__ import annotations
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 # ── Basic building blocks ─────────────────────────────────────────────────────
@@ -54,10 +59,10 @@ class ELAN(nn.Module):
     """Efficient Layer Aggregation Network block (YOLOv7)."""
     def __init__(self, c_in, c_out, c_mid, n=4):
         super().__init__()
-        self.cv1 = CBS(c_in,  c_mid, 1)
-        self.cv2 = CBS(c_in,  c_mid, 1)
-        self.cvs = nn.ModuleList([CBS(c_mid, c_mid, 3) for _ in range(n)])
-        self.cv7 = CBS(c_mid * (n + 2), c_out, 1)
+        self.cv1  = CBS(c_in,  c_mid, 1)
+        self.cv2  = CBS(c_in,  c_mid, 1)
+        self.cvs  = nn.ModuleList([CBS(c_mid, c_mid, 3) for _ in range(n)])
+        self.cvout = CBS(c_mid * (n + 2), c_out, 1)   # named 'cvout' to match checkpoint
 
     def forward(self, x):
         x1 = self.cv1(x)
@@ -67,14 +72,16 @@ class ELAN(nn.Module):
         for cv in self.cvs:
             xi = cv(xi)
             xs.append(xi)
-        return self.cv7(torch.cat(xs, dim=1))
+        return self.cvout(torch.cat(xs, dim=1))
 
 
 class SPPCSPC(nn.Module):
-    """Spatial Pyramid Pooling with CSP."""
+    """Spatial Pyramid Pooling with CSP.
+    Internal width c_ = c_out // 2 (matches checkpoint: cv1 out = 256 when c_out=512).
+    """
     def __init__(self, c_in, c_out, k=(5, 9, 13)):
         super().__init__()
-        c_ = c_out
+        c_ = c_out // 2     # 256 when c_out=512  ← matches checkpoint weight shapes
         self.cv1 = CBS(c_in,  c_,  1)
         self.cv2 = CBS(c_in,  c_,  1)
         self.cv3 = CBS(c_,    c_,  3)
