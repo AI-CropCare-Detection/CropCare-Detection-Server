@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Union
+import json
 
 import cv2
 import matplotlib.pyplot as plt
@@ -45,14 +46,33 @@ class PlantDiseasePredictor:
 
     def __init__(self, ckpt_path: str | Path, device: str | None = None) -> None:
         self.device = device or DEVICE
+        ckpt_path = Path(ckpt_path)
 
-        ckpt = torch.jit.load(ckpt_path, map_location=self.device)
-        self.class_names: list[str] = ckpt["class_names"]
-        self.nc:   int = ckpt["num_classes"]
-        self.isz:  int = ckpt["img_size"]
+        # Try loading as TorchScript first, then fall back to regular checkpoint
+        try:
+            self.model = torch.jit.load(ckpt_path, map_location=self.device)
+            # Load metadata from JSON file
+            metadata_path = ckpt_path.parent / "metadata.json"
+            if metadata_path.exists():
+                with open(metadata_path, "r") as f:
+                    metadata = json.load(f)
+                self.class_names = metadata["class_names"]
+                self.nc = metadata["num_classes"]
+                self.isz = metadata["img_size"]
+            else:
+                raise FileNotFoundError(f"Metadata file not found: {metadata_path}")
+        except (RuntimeError, NotImplementedError):
+            # Fall back to regular torch.load for standard checkpoints
+            ckpt = torch.load(ckpt_path, map_location=self.device, weights_only=False)
+            self.class_names: list[str] = ckpt["class_names"]
+            self.nc:   int = ckpt["num_classes"]
+            self.isz:  int = ckpt["img_size"]
+            
+            self.model = YOLOv7Classifier(self.nc, dropout=0.0)
+            self.model.load_state_dict(ckpt["model_state"])
+            self.model.to(self.device).eval()
+            return
 
-        self.model = YOLOv7Classifier(self.nc, dropout=0.0)
-        self.model.load_state_dict(ckpt["model_state"])
         self.model.to(self.device).eval()
 
         self.base_tfm = A.Compose([
