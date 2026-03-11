@@ -46,7 +46,7 @@ class PlantDiseasePredictor:
     def __init__(self, ckpt_path: str | Path, device: str | None = None) -> None:
         self.device = device or DEVICE
 
-        ckpt = torch.load(ckpt_path, map_location=self.device, weights_only=False)
+        ckpt = torch.jit.load(ckpt_path, map_location=self.device, weights_only=False)
         self.class_names: list[str] = ckpt["class_names"]
         self.nc:   int = ckpt["num_classes"]
         self.isz:  int = ckpt["img_size"]
