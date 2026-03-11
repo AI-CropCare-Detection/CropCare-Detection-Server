@@ -196,6 +196,6 @@ def get_predictor() -> PlantDiseasePredictor:
     """
     global _predictor
     if _predictor is None:
-        ckpt = Path(CFG["CHECKPOINT_DIR"]) / "best_model.pt"
+        ckpt = Path(CFG["CHECKPOINT_DIR"]) / "yolov7_plant_disease.torchscript.pt"
         _predictor = PlantDiseasePredictor(ckpt)
     return _predictor
